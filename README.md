@@ -1,2 +1,7 @@
 # bio-read
-Bionic reading in terminal
+
+Bionic reading in terminal.
+
+## TODO
+
+- [ ] Allow streaming
