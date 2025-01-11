@@ -2,6 +2,12 @@
 name = "bio-read"
 version = "0.1.0"
 edition = "2021"
+include = ["/src", "LICENSE", "README.md"]
+repository = "https://github.com/PRO-2684/bio-read"
+license = "AGPL-3.0-or-later"
+readme = "README.md"
+description = "Bionic reading in terminal."
+keywords = ["bionic", "reading", "terminal", "cli", "rust"]
 
 [dependencies]
 colored = "3.0.0"
