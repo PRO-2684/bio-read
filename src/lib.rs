@@ -13,6 +13,8 @@ pub struct BioReader {
     de_emphasize: fn(&str) -> String,
     /// Fixation boundary list. A word of length `fixation_boundaries[i]` or less will be emphasized except for the last `i` characters. If the word is longer than `fixation_boundaries.last()`, `fixation_boundaries.len()` will be used (one more than the last boundary).
     fixation_boundaries: Vec<usize>,
+    /// Fixation point. Should be in range [1, 5]. Default is 3.
+    // fixation_point: usize,
     /// Common words. Only the first letter of these words will be emphasized.
     common_words: HashSet<String>,
 }
@@ -23,7 +25,7 @@ impl BioReader {
         Self {
             emphasize: |s| s.bold().to_string(),
             de_emphasize: |s| s.dimmed().to_string(),
-            fixation_boundaries: vec![0, 4, 12, 17, 24, 29, 35, 42, 48], // https://github.com/Gumball12/text-vide/blob/43f2909508be3906d75fde585484eeb67cb867bc/packages/text-vide/src/getFixationLength.ts#L2
+            fixation_boundaries: Self::fixation_boundaries(3),
             common_words: [
                 // https://github.com/yitong2333/Bionic-Reading/blob/acaecfc852f9778a58af89863b80b56bcd4eb637/%E4%BB%BF%E7%94%9F%E9%98%85%E8%AF%BB(Bionic%20Reading)-1.6.user.js#L33-L38
                 "the", "and", "in", "on", "at", "by", "with", "about", "against", "between", "into",
@@ -37,6 +39,7 @@ impl BioReader {
             .collect(),
         }
     }
+
     /// Set the function to emphasize part of a word.
     pub fn emphasize(&mut self, f: fn(&str) -> String) {
         self.emphasize = f;
@@ -45,21 +48,39 @@ impl BioReader {
     pub fn de_emphasize(&mut self, f: fn(&str) -> String) {
         self.de_emphasize = f;
     }
+    /// Set the fixation point. Should be in range [1, 5].
+    ///
+    /// # Panics
+    ///
+    /// Panics if `fixation_point` is not in range [1, 5].
+    pub fn fixation_point(&mut self, fixation_point: usize) {
+        assert!(1 <= fixation_point && fixation_point <= 5, "Fixation point should be in range [1, 5], but got {}", fixation_point);
+        self.fixation_boundaries = Self::fixation_boundaries(fixation_point);
+    }
+
     /// Do bio-reading on a word.
     pub fn bio_read_word(&self, word: &str) -> String {
         if self.common_words.contains(&word.to_lowercase()) {
-            return format!("{}{}", (self.emphasize)(&word[..1]), (self.de_emphasize)(&word[1..]));
+            return format!(
+                "{}{}",
+                (self.emphasize)(&word[..1]),
+                (self.de_emphasize)(&word[1..])
+            );
         }
         let len = word.len();
-        let fixation_length_from_last = self
-            .fixation_boundaries
+        let fixation_boundaries = &self.fixation_boundaries;
+        let fixation_length_from_last = fixation_boundaries
             .iter()
             .enumerate() // (index, value), representing (boundary, length)
             .find(|(_, length)| len <= **length) // Find the first boundary that is larger than the word length
-            .map_or(self.fixation_boundaries.len(), |(boundary, _)| boundary); // If not found, use the last boundary
+            .map_or(fixation_boundaries.len(), |(boundary, _)| boundary); // If not found, use the last boundary
         let fixation_boundary = word.len() - fixation_length_from_last;
         let (prefix, suffix) = word.split_at(fixation_boundary);
-        format!("{}{}", (self.emphasize)(prefix), (self.de_emphasize)(suffix))
+        format!(
+            "{}{}",
+            (self.emphasize)(prefix),
+            (self.de_emphasize)(suffix)
+        )
     }
     /// Do bio-reading on a piece of text.
     pub fn bio_read_text(&self, text: &str) -> String {
@@ -83,5 +104,29 @@ impl BioReader {
             result.push_str(&self.bio_read_word(&word));
         }
         result
+    }
+
+    /// Get the fixation boundaries given a fixation point.
+    fn fixation_boundaries(fixation_point: usize) -> Vec<usize> {
+        match fixation_point - 1 { // `fixation_point` is 1-based
+            // data from https://github.com/Gumball12/text-vide/blob/main/packages/text-vide/src/getFixationLength.ts#L1-L16
+            0 => vec![0, 4, 12, 17, 24, 29, 35, 42, 48],
+            1 => vec![
+                1, 2, 7, 10, 13, 14, 19, 22, 25, 28, 31, 34, 37, 40, 43, 46, 49,
+            ],
+            2 => vec![
+                1, 2, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43,
+                45, 47, 49,
+            ],
+            3 => vec![
+                0, 2, 4, 5, 6, 8, 9, 11, 14, 15, 17, 18, 20, 0, 21, 23, 24, 26, 27, 29, 30, 32, 33,
+                35, 36, 38, 39, 41, 42, 44, 45, 47, 48,
+            ],
+            4 => vec![
+                0, 2, 3, 5, 6, 7, 8, 10, 11, 12, 14, 15, 17, 19, 20, 21, 23, 24, 25, 26, 28, 29,
+                30, 32, 33, 34, 35, 37, 38, 39, 41, 42, 43, 44, 46, 47, 48,
+            ],
+            _ => vec![0, 4, 12, 17, 24, 29, 35, 42, 48], // Default to 0
+        }
     }
 }
