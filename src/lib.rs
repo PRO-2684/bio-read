@@ -153,7 +153,7 @@ impl BioReader {
         let mut result = String::with_capacity(text.len());
         let mut word = String::new();
         for c in text.chars() {
-            if c.is_alphabetic() {
+            if c.is_ascii_alphabetic() {
                 // A letter
                 word.push(c);
             } else {
