@@ -40,20 +40,28 @@ impl BioReader {
         }
     }
 
-    /// Set the function to emphasize part of a word. Default to bold.
+    /// Set the function to emphasize part of a word. Default to bold when printed.
     ///
     /// # Example
     ///
-    /// See [BioReader::fixation_point] for a comprehensive example.
+    /// ```rust
+    /// use bio_read::BioReader;
+    /// let reader = BioReader::new().emphasize(|s| format!("**{s}**")); // Emphasize by wrapping with `**`
+    /// assert_eq!(reader.bio_read_text("hello world"), "**hel**lo **wor**ld");
+    /// ```
     pub fn emphasize(mut self, f: fn(&str) -> String) -> Self {
         self.emphasize = f;
         self
     }
-    /// Set the function to de-emphasize part of a word. Default to dimmed.
+    /// Set the function to de-emphasize part of a word. Default to dimmed when printed.
     ///
     /// # Example
     ///
-    /// See [BioReader::fixation_point] for a comprehensive example.
+    /// ```rust
+    /// use bio_read::BioReader;
+    /// let reader = BioReader::new().de_emphasize(|s| format!("_{s}_")); // De-emphasize by wrapping with `_`
+    /// assert_eq!(reader.bio_read_text("hello world"), "hel_lo_ wor_ld_");
+    /// ```
     pub fn de_emphasize(mut self, f: fn(&str) -> String) -> Self {
         self.de_emphasize = f;
         self
@@ -65,17 +73,24 @@ impl BioReader {
     /// ```rust
     /// use bio_read::BioReader;
     /// let reader = BioReader::new()
-    ///    .emphasize(|s| s.to_uppercase()) // Emphasize by uppercasing
-    ///    .de_emphasize(|s| s.to_lowercase()) // De-emphasize by lowercasing
-    ///    .fixation_point(1); // Set fixation point to 1
-    /// assert_eq!(reader.bio_read_word("hElLo"), "HELlo");
+    ///     .emphasize(|s| format!("**{s}**"))
+    ///     .fixation_point(1); // Set fixation point to 1
+    /// assert_eq!(reader.bio_read_word("pneumonoultramicroscopicsilicovolcanoconiosis"), "**pneumonoultramicroscopicsilicovolcano**coniosis");
+    /// let reader = BioReader::new()
+    ///     .emphasize(|s| format!("**{s}**"))
+    ///     .fixation_point(5); // Set fixation point to 5
+    /// assert_eq!(reader.bio_read_word("pneumonoultramicroscopicsilicovolcanoconiosis"), "**pneumonoult**ramicroscopicsilicovolcanoconiosis");
     /// ```
     ///
     /// # Panics
     ///
     /// Panics if `fixation_point` is not in range \[1, 5\].
     pub fn fixation_point(mut self, fixation_point: usize) -> Self {
-        assert!(1 <= fixation_point && fixation_point <= 5, "Fixation point should be in range [1, 5], but got {}", fixation_point);
+        assert!(
+            1 <= fixation_point && fixation_point <= 5,
+            "Fixation point should be in range [1, 5], but got {}",
+            fixation_point
+        );
         self.fixation_boundaries = Self::fixation_boundaries(fixation_point);
         self
     }
@@ -130,7 +145,8 @@ impl BioReader {
 
     /// Get the fixation boundaries given a fixation point.
     fn fixation_boundaries(fixation_point: usize) -> Vec<usize> {
-        match fixation_point - 1 { // `fixation_point` is 1-based
+        match fixation_point - 1 {
+            // `fixation_point` is 1-based
             // data from https://github.com/Gumball12/text-vide/blob/main/packages/text-vide/src/getFixationLength.ts#L1-L16
             0 => vec![0, 4, 12, 17, 24, 29, 35, 42, 48],
             1 => vec![
