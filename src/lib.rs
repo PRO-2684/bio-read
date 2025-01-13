@@ -40,7 +40,7 @@ impl BioReader {
         }
     }
 
-    /// Set the function to emphasize part of a word. Default to bold when printed.
+    /// Set the function to emphasize part of a word. Default to bold if environment supports it.
     ///
     /// # Example
     ///
@@ -60,7 +60,7 @@ impl BioReader {
         self.emphasize = f;
         self
     }
-    /// Set the function to de-emphasize part of a word. Default to dimmed when printed.
+    /// Set the function to de-emphasize part of a word. Default to dimmed if environment supports it.
     ///
     /// # Example
     ///
@@ -80,7 +80,7 @@ impl BioReader {
         self.de_emphasize = f;
         self
     }
-    /// Set the fixation point. Should be in range \[1, 5\], default to 3.
+    /// Set the fixation point. The lower the fixation point, the more characters will be emphasized. The `fixation_point` should be in range \[1, 5\], defaulting to 3 when not specified.
     ///
     /// # Example
     ///
