@@ -41,21 +41,24 @@ impl BioReader {
     }
 
     /// Set the function to emphasize part of a word.
-    pub fn emphasize(&mut self, f: fn(&str) -> String) {
+    pub fn emphasize(mut self, f: fn(&str) -> String) -> Self {
         self.emphasize = f;
+        self
     }
     /// Set the function to de-emphasize part of a word.
-    pub fn de_emphasize(&mut self, f: fn(&str) -> String) {
+    pub fn de_emphasize(mut self, f: fn(&str) -> String) -> Self {
         self.de_emphasize = f;
+        self
     }
-    /// Set the fixation point. Should be in range [1, 5].
+    /// Set the fixation point. Should be in range \[1, 5\].
     ///
     /// # Panics
     ///
-    /// Panics if `fixation_point` is not in range [1, 5].
-    pub fn fixation_point(&mut self, fixation_point: usize) {
+    /// Panics if `fixation_point` is not in range \[1, 5\].
+    pub fn fixation_point(mut self, fixation_point: usize) -> Self {
         assert!(1 <= fixation_point && fixation_point <= 5, "Fixation point should be in range [1, 5], but got {}", fixation_point);
         self.fixation_boundaries = Self::fixation_boundaries(fixation_point);
+        self
     }
 
     /// Do bio-reading on a word.

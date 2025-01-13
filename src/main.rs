@@ -1,9 +1,9 @@
 use std::io::Read;
-
 use bio_read::BioReader;
 
 fn main() {
-    let reader = BioReader::new();
+    let fixation_point = 3;
+    let reader = BioReader::new().fixation_point(fixation_point);
     // Read from stdin until EOF
     let mut text = String::new();
     std::io::stdin().read_to_string(&mut text).expect("Failed to read from stdin");
