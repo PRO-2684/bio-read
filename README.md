@@ -1,7 +1,7 @@
 # bio-read
 
 [![GitHub License](https://img.shields.io/github/license/PRO-2684/bio-read?logo=opensourceinitiative)](https://github.com/PRO-2684/bio-read/blob/main/LICENSE)
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/PRO-2684/bio-read/release.yml?branch=main&logo=githubactions)](https://github.com/PRO-2684/bio-read/blob/main/.github/workflows/release.yml)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/PRO-2684/bio-read/release.yml?logo=githubactions)](https://github.com/PRO-2684/bio-read/blob/main/.github/workflows/release.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/PRO-2684/bio-read?logo=githubactions)](https://github.com/PRO-2684/bio-read/releases)
 [![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/PRO-2684/bio-read/total?logo=github)](https://github.com/PRO-2684/bio-read/releases)
 [![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/PRO-2684/bio-read/latest/total?logo=github)](https://github.com/PRO-2684/bio-read/releases/latest)
