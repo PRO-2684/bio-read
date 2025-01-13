@@ -40,17 +40,36 @@ impl BioReader {
         }
     }
 
-    /// Set the function to emphasize part of a word.
+    /// Set the function to emphasize part of a word. Default to bold.
+    ///
+    /// # Example
+    ///
+    /// See [BioReader::fixation_point] for a comprehensive example.
     pub fn emphasize(mut self, f: fn(&str) -> String) -> Self {
         self.emphasize = f;
         self
     }
-    /// Set the function to de-emphasize part of a word.
+    /// Set the function to de-emphasize part of a word. Default to dimmed.
+    ///
+    /// # Example
+    ///
+    /// See [BioReader::fixation_point] for a comprehensive example.
     pub fn de_emphasize(mut self, f: fn(&str) -> String) -> Self {
         self.de_emphasize = f;
         self
     }
-    /// Set the fixation point. Should be in range \[1, 5\].
+    /// Set the fixation point. Should be in range \[1, 5\], default to 3.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use bio_read::BioReader;
+    /// let reader = BioReader::new()
+    ///    .emphasize(|s| s.to_uppercase()) // Emphasize by uppercasing
+    ///    .de_emphasize(|s| s.to_lowercase()) // De-emphasize by lowercasing
+    ///    .fixation_point(1); // Set fixation point to 1
+    /// assert_eq!(reader.bio_read_word("hElLo"), "HELlo");
+    /// ```
     ///
     /// # Panics
     ///
