@@ -1,6 +1,6 @@
 use argh::FromArgs;
 use bio_read::BioReader;
-use std::io::Read;
+use std::io::{Lines, BufRead, BufReader};
 
 #[derive(FromArgs)]
 /// Bionic reading in terminal.
@@ -8,6 +8,17 @@ pub struct Args {
     /// the fixation point. Should be in range [1, 5]. Default is 3.
     #[argh(option, short = 'f', default = "3")]
     fixation_point: usize,
+    /// the file to read from. Read from stdin if not specified.
+    #[argh(option, short = 'i')]
+    input: Option<String>,
+}
+
+fn process_lines(reader: &BioReader, lines: Lines<impl BufRead>) {
+    for line in lines {
+        let line = line.expect("Failed to read line");
+        let bio_read_text = reader.bio_read_text(&line);
+        println!("{}", bio_read_text);
+    }
 }
 
 fn main() {
@@ -18,11 +29,16 @@ fn main() {
         std::process::exit(1);
     }
     let reader = BioReader::new().fixation_point(fixation_point);
-    // Read from stdin until EOF
-    let mut text = String::new();
-    std::io::stdin()
-        .read_to_string(&mut text)
-        .expect("Failed to read from stdin");
-    let bio_read_text = reader.bio_read_text(&text);
-    println!("{}", bio_read_text);
+    match args.input {
+        Some(path) => {
+            // Read from file
+            let file = std::fs::File::open(path).expect("Failed to open file");
+            let buffer = BufReader::new(file);
+            process_lines(&reader, buffer.lines());
+        },
+        None => {
+            // Read from stdin
+            process_lines(&reader, std::io::stdin().lock().lines());
+        },
+    }
 }
