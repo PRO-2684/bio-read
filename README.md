@@ -26,8 +26,30 @@ cargo install bio-read
 
 ## 📖 Usage
 
+For simple usage, pipe the text you want to read into `br`:
+
 ```bash
-cat file.txt | br
+$ cat file.txt | br
+```
+
+To set fixation points, use the `-f` flag, which is a shorthand for `--fixation-point`:
+
+```bash
+$ cat file.txt | br -f 1
+```
+
+Here's the help message:
+
+```bash
+$ br --help
+Usage: br [-f <fixation-point>]
+
+Bionic reading in terminal.
+
+Options:
+  -f, --fixation-point
+                    the fixation point. Should be in range [1, 5]. Default is 3.
+  --help, help      display usage information
 ```
 
 ## TODO

@@ -10,6 +10,7 @@ description = "Bionic reading in terminal."
 keywords = ["bionic", "reading", "terminal", "cli", "rust"]
 
 [dependencies]
+argh = "0.1.13"
 colored = "3.0.0"
 
 [profile.release]
