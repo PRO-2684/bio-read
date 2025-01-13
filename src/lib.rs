@@ -49,6 +49,13 @@ impl BioReader {
     /// let reader = BioReader::new().emphasize(|s| format!("**{s}**")); // Emphasize by wrapping with `**`
     /// assert_eq!(reader.bio_read_text("hello world"), "**hel**lo **wor**ld");
     /// ```
+    ///
+    /// # See also
+    ///
+    /// Other methods that can be used to customize the [`BioReader`]:
+    ///
+    /// - [`BioReader::de_emphasize`]
+    /// - [`BioReader::fixation_point`]
     pub fn emphasize(mut self, f: fn(&str) -> String) -> Self {
         self.emphasize = f;
         self
@@ -62,6 +69,13 @@ impl BioReader {
     /// let reader = BioReader::new().de_emphasize(|s| format!("_{s}_")); // De-emphasize by wrapping with `_`
     /// assert_eq!(reader.bio_read_text("hello world"), "hel_lo_ wor_ld_");
     /// ```
+    ///
+    /// # See also
+    ///
+    /// Other methods that can be used to customize the [`BioReader`]:
+    ///
+    /// - [`BioReader::emphasize`]
+    /// - [`BioReader::fixation_point`]
     pub fn de_emphasize(mut self, f: fn(&str) -> String) -> Self {
         self.de_emphasize = f;
         self
@@ -85,6 +99,13 @@ impl BioReader {
     /// # Panics
     ///
     /// Panics if `fixation_point` is not in range \[1, 5\].
+    ///
+    /// # See also
+    ///
+    /// Other methods that can be used to customize the [`BioReader`]:
+    ///
+    /// - [`BioReader::emphasize`]
+    /// - [`BioReader::de_emphasize`]
     pub fn fixation_point(mut self, fixation_point: usize) -> Self {
         assert!(
             1 <= fixation_point && fixation_point <= 5,
@@ -96,6 +117,10 @@ impl BioReader {
     }
 
     /// Do bio-reading on a word.
+    ///
+    /// # See also
+    ///
+    /// [`BioReader::bio_read_text`]: Do bio-reading on a piece of text.
     pub fn bio_read_word(&self, word: &str) -> String {
         if self.common_words.contains(&word.to_lowercase()) {
             return format!(
@@ -120,6 +145,10 @@ impl BioReader {
         )
     }
     /// Do bio-reading on a piece of text.
+    ///
+    /// # See also
+    ///
+    /// [`BioReader::bio_read_word`]: Do bio-reading on a word.
     pub fn bio_read_text(&self, text: &str) -> String {
         let mut result = String::with_capacity(text.len());
         let mut word = String::new();
