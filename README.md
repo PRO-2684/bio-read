@@ -60,6 +60,6 @@ $ cat file.txt | br -f 1
 ## ✅ TODO
 
 - [x] Streaming input and output (`bio_read` method of `bio_read::BioReader`)
-- [ ] Remove empty de-emphasized characters
+- [x] Remove empty de-emphasized tags
 - [ ] Auto detection of whether ansi styling is supported (`anstream::AutoStream`?)
 - [ ] Allow overriding auto detection of ansi styling (`anstream::ColorChoice`?)

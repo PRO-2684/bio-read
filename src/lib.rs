@@ -124,6 +124,10 @@ impl BioReader {
         let fixation_length_from_last = self.get_fixation_length_from_last(len);
         let fixation_boundary = word.len() - fixation_length_from_last;
         let (prefix, suffix) = word.split_at(fixation_boundary);
+        // If suffix is empty, skip the de-emphasize part
+        if suffix.is_empty() {
+            return format!("{}{}{}", self.emphasize[0], word, self.emphasize[1]);
+        }
         format!(
             "{}{}{}{}{}{}",
             self.emphasize[0],
@@ -275,6 +279,10 @@ impl BioReader {
     }
     /// Write the buffer wrapped with de-emphasize tags
     fn de_emphasize_buffer(&self, writer: &mut impl Write, buffer: &mut VecDeque<char>) -> std::io::Result<()> {
+        // Skip if the buffer is empty
+        if buffer.is_empty() {
+            return Ok(());
+        }
         // Write de-emphasize start
         writer.write_all(self.de_emphasize[0].as_bytes())?;
         // Write unwritten word characters
