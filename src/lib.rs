@@ -200,37 +200,17 @@ impl BioReader {
                     writer.write_all(self.emphasize[0].as_bytes())?;
                 } else {
                     // Middle of a word
-                    let fixation_length_from_last = self.get_fixation_length_from_last(state.read);
-                    let least_emphasize_length = state.read - fixation_length_from_last;
-                    if state.written < least_emphasize_length {
-                        // Write word[written, least_emphasize_length], which should be buffer[0, least_emphasize_length - written]
-                        let to_write = buffer.drain(0..least_emphasize_length - state.written).map(|c| c as u8).collect::<Vec<_>>();
-                        writer.write_all(&to_write)?;
-                        state.written = least_emphasize_length;
-                    }
+                    self.try_write(writer, &mut buffer, &mut state)?;
                 }
                 buffer.push_back(c);
             } else {
                 // Not a letter - special character
                 if state.read != 0 {
                     // End of a word
-                    let fixation_length_from_last = self.get_fixation_length_from_last(state.read);
-                    let least_emphasize_length = state.read - fixation_length_from_last;
-                    if state.written < least_emphasize_length {
-                        // Write word[written, least_emphasize_length], which should be buffer[0, least_emphasize_length - written]
-                        let to_write = buffer.drain(0..least_emphasize_length - state.written).map(|c| c as u8).collect::<Vec<_>>();
-                        writer.write_all(&to_write)?;
-                        state.written = least_emphasize_length;
-                    }
+                    self.try_write(writer, &mut buffer, &mut state)?;
                     // Write emphasize end
                     writer.write_all(self.emphasize[1].as_bytes())?;
-                    // Write de-emphasize start
-                    writer.write_all(self.de_emphasize[0].as_bytes())?;
-                    // Write unwritten word characters
-                    let to_write = buffer.drain(..).map(|c| c as u8).collect::<Vec<_>>();
-                    writer.write_all(&to_write)?;
-                    // Write de-emphasize end
-                    writer.write_all(self.de_emphasize[1].as_bytes())?;
+                    self.de_emphasize_buffer(writer, &mut buffer)?;
                     state.read = 0;
                     state.written = 0;
                 }
@@ -242,13 +222,7 @@ impl BioReader {
         if state.read > 0 {
             // Write emphasize end
             writer.write_all(self.emphasize[1].as_bytes())?;
-            // Write de-emphasize start
-            writer.write_all(self.de_emphasize[0].as_bytes())?;
-            // Write unwritten word characters
-            let to_write = buffer.drain(..).map(|c| c as u8).collect::<Vec<_>>();
-            writer.write_all(&to_write)?;
-            // Write de-emphasize end
-            writer.write_all(self.de_emphasize[1].as_bytes())?;
+            self.de_emphasize_buffer(writer, &mut buffer)?;
         }
         Ok(())
     }
@@ -298,6 +272,29 @@ impl BioReader {
         } else {
             *self.reverse_fixation_boundaries.last().unwrap() + 1 // Longer words default to the last plus one
         }
+    }
+    /// Write the buffer wrapped with de-emphasize tags
+    fn de_emphasize_buffer(&self, writer: &mut impl Write, buffer: &mut VecDeque<char>) -> std::io::Result<()> {
+        // Write de-emphasize start
+        writer.write_all(self.de_emphasize[0].as_bytes())?;
+        // Write unwritten word characters
+        let to_write = buffer.drain(..).map(|c| c as u8).collect::<Vec<_>>();
+        writer.write_all(&to_write)?;
+        // Write de-emphasize end
+        writer.write_all(self.de_emphasize[1].as_bytes())?;
+        Ok(())
+    }
+    /// Try to write a part of the buffer, with respect to the current state
+    fn try_write(&self, writer: &mut impl Write, buffer: &mut VecDeque<char>, state: &mut State) -> std::io::Result<()> {
+        let fixation_length_from_last = self.get_fixation_length_from_last(state.read);
+        let least_emphasize_length = state.read - fixation_length_from_last;
+        if state.written < least_emphasize_length {
+            // Write word[written, least_emphasize_length], which should be buffer[0, least_emphasize_length - written]
+            let to_write = buffer.drain(0..least_emphasize_length - state.written).map(|c| c as u8).collect::<Vec<_>>();
+            writer.write_all(&to_write)?;
+            state.written = least_emphasize_length;
+        }
+        Ok(())
     }
 }
 
