@@ -14,8 +14,8 @@ pub struct BioReader {
     emphasize: [String; 2],
     /// The strings to be wrapped around the de-emphasized part of a word.
     de_emphasize: [String; 2],
-    /// Fixation boundary list. A word of length `fixation_boundaries[i]` or less will be emphasized except for the last `i` characters. If the word is longer than `fixation_boundaries.last()`, `fixation_boundaries.len()` will be used (one more than the last boundary).
-    fixation_boundaries: Vec<usize>,
+    /// Reverse map of fixation boundaries for quick lookup. A word of length `i` or less will be emphasized except for the last `reverse_fixation_boundaries[i]` characters. If the word is longer than `reverse_fixation_boundaries.len()`, `reverse_fixation_boundaries.last().unwrap() + 1` will be used (one more than the last).
+    reverse_fixation_boundaries: Vec<usize>,
     /// Common words. Only the first letter of these words will be emphasized.
     common_words: HashSet<String>,
 }
@@ -28,7 +28,7 @@ impl BioReader {
         Self {
             emphasize: [format!("{bold}"), format!("{bold:#}")],
             de_emphasize: [format!("{dim}"), format!("{dim:#}")],
-            fixation_boundaries: Self::fixation_boundaries(3),
+            reverse_fixation_boundaries: Self::reverse_fixation_boundaries(&Self::fixation_boundaries(3)),
             common_words: [
                 // https://github.com/yitong2333/Bionic-Reading/blob/acaecfc852f9778a58af89863b80b56bcd4eb637/%E4%BB%BF%E7%94%9F%E9%98%85%E8%AF%BB(Bionic%20Reading)-1.6.user.js#L33-L38
                 "the", "and", "in", "on", "at", "by", "with", "about", "against", "between", "into",
@@ -123,7 +123,7 @@ impl BioReader {
             "Fixation point should be in range [1, 5], but got {}",
             fixation_point
         );
-        self.fixation_boundaries = Self::fixation_boundaries(fixation_point);
+        self.reverse_fixation_boundaries = Self::reverse_fixation_boundaries(&Self::fixation_boundaries(fixation_point));
         self
     }
 
@@ -145,12 +145,11 @@ impl BioReader {
             );
         }
         let len = word.len();
-        let fixation_boundaries = &self.fixation_boundaries;
-        let fixation_length_from_last = fixation_boundaries
-            .iter()
-            .enumerate() // (index, value), representing (boundary, length)
-            .find(|(_, length)| len <= **length) // Find the first boundary that is larger than the word length
-            .map_or(fixation_boundaries.len(), |(boundary, _)| boundary); // If not found, use the last boundary
+        let fixation_length_from_last = if len < self.reverse_fixation_boundaries.len() {
+            self.reverse_fixation_boundaries[len]
+        } else {
+            *self.reverse_fixation_boundaries.last().unwrap() + 1 // Default to the last + 1
+        };
         let fixation_boundary = word.len() - fixation_length_from_last;
         let (prefix, suffix) = word.split_at(fixation_boundary);
         format!(
@@ -223,4 +222,34 @@ impl BioReader {
             _ => vec![0, 4, 12, 17, 24, 29, 35, 42, 48], // Default to 0
         }
     }
+    /// Reverse map given fixation boundaries for quick lookup.
+    fn reverse_fixation_boundaries(fixation_boundaries: &[usize]) -> Vec<usize> {
+        let last = fixation_boundaries.last().expect("Invalid fixation boundaries");
+        let mut fixation = 0;
+        let mut result = vec![0; *last + 1];
+        for i in 0_usize..=*last {
+            result[i] = fixation;
+            if i >= fixation_boundaries[fixation] {
+                fixation += 1;
+            }
+        }
+        result
+    }
+}
+
+/// Possible text formats.
+enum Format {
+    Emphasize,
+    DeEmphasize,
+    Normal,
+}
+
+/// Current state. Used internally for [`BioReader::bio_read`].
+struct State {
+    /// Current text format.
+    format: Format,
+    /// How many letters of the current word have been read.
+    read: usize,
+    /// How many letters of the current word have been written.
+    written: usize,
 }
