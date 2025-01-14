@@ -2,19 +2,20 @@
 //!
 //! The `bio-read` library is an open-source implementation of the Bionic Reading method. Taking inspiration from [text-vide](https://github.com/Gumball12/text-vide/blob/main/HOW.md) and [a bionic reading userscript](https://github.com/yitong2333/Bionic-Reading/blob/main/%E4%BB%BF%E7%94%9F%E9%98%85%E8%AF%BB(Bionic%20Reading)-1.6.user.js), this library ports the Bionic Reading method to Rust and provides a CLI for bio-reading text files right from the terminal.
 
-use colored::Colorize;
-use std::collections::HashSet;
+use anstyle::Style;
+use std::{
+    collections::HashSet,
+    io::{Read, Write},
+};
 
 /// A BioReader object, allowing for customizing the bio-reading experience.
 pub struct BioReader {
-    /// The fucntion to emphasize part of a word. Default is bold.
-    emphasize: fn(&str) -> String,
-    /// The function to de-emphasize part of a word. Default is dimmed.
-    de_emphasize: fn(&str) -> String,
+    /// The strings to be wrapped around the emphasized part of a word.
+    emphasize: [String; 2],
+    /// The strings to be wrapped around the de-emphasized part of a word.
+    de_emphasize: [String; 2],
     /// Fixation boundary list. A word of length `fixation_boundaries[i]` or less will be emphasized except for the last `i` characters. If the word is longer than `fixation_boundaries.last()`, `fixation_boundaries.len()` will be used (one more than the last boundary).
     fixation_boundaries: Vec<usize>,
-    /// Fixation point. Should be in range [1, 5]. Default is 3.
-    // fixation_point: usize,
     /// Common words. Only the first letter of these words will be emphasized.
     common_words: HashSet<String>,
 }
@@ -22,9 +23,11 @@ pub struct BioReader {
 impl BioReader {
     /// Create a new BioReader object.
     pub fn new() -> Self {
+        let bold = Style::new().bold();
+        let dim = Style::new().dimmed();
         Self {
-            emphasize: |s| s.bold().to_string(),
-            de_emphasize: |s| s.dimmed().to_string(),
+            emphasize: [format!("{bold}"), format!("{bold:#}")],
+            de_emphasize: [format!("{dim}"), format!("{dim:#}")],
             fixation_boundaries: Self::fixation_boundaries(3),
             common_words: [
                 // https://github.com/yitong2333/Bionic-Reading/blob/acaecfc852f9778a58af89863b80b56bcd4eb637/%E4%BB%BF%E7%94%9F%E9%98%85%E8%AF%BB(Bionic%20Reading)-1.6.user.js#L33-L38
@@ -40,14 +43,16 @@ impl BioReader {
         }
     }
 
-    /// Set the function to emphasize part of a word. Default to bold if environment supports it.
+    /// Set the strings to be wrapped around the emphasized part of a word. Default to bold if environment supports it.
     ///
     /// # Example
     ///
     /// ```rust
     /// use bio_read::BioReader;
-    /// let reader = BioReader::new().emphasize(|s| format!("**{s}**")); // Emphasize by wrapping with `**`
-    /// assert_eq!(reader.bio_read_text("hello world"), "**hel**lo **wor**ld");
+    /// let reader = BioReader::new()
+    ///     .emphasize(String::from("<em>"), String::from("</em>"))
+    ///     .de_emphasize(String::from(""), String::from(""));
+    /// assert_eq!(reader.bio_read_text("hello world"), "<em>hel</em>lo <em>wor</em>ld");
     /// ```
     ///
     /// # See also
@@ -56,18 +61,20 @@ impl BioReader {
     ///
     /// - [`BioReader::de_emphasize`]
     /// - [`BioReader::fixation_point`]
-    pub fn emphasize(mut self, f: fn(&str) -> String) -> Self {
-        self.emphasize = f;
+    pub fn emphasize(mut self, left: String, right: String) -> Self {
+        self.emphasize = [left, right];
         self
     }
-    /// Set the function to de-emphasize part of a word. Default to dimmed if environment supports it.
+    /// Set the strings to be wrapped around the de-emphasized part of a word. Default to dimmed if environment supports it.
     ///
     /// # Example
     ///
     /// ```rust
     /// use bio_read::BioReader;
-    /// let reader = BioReader::new().de_emphasize(|s| format!("_{s}_")); // De-emphasize by wrapping with `_`
-    /// assert_eq!(reader.bio_read_text("hello world"), "hel_lo_ wor_ld_");
+    /// let reader = BioReader::new()
+    ///    .emphasize(String::from(""), String::from(""))
+    ///     .de_emphasize(String::from("<de>"), String::from("</de>"));
+    /// assert_eq!(reader.bio_read_text("hello world"), "hel<de>lo</de> wor<de>ld</de>");
     /// ```
     ///
     /// # See also
@@ -76,8 +83,8 @@ impl BioReader {
     ///
     /// - [`BioReader::emphasize`]
     /// - [`BioReader::fixation_point`]
-    pub fn de_emphasize(mut self, f: fn(&str) -> String) -> Self {
-        self.de_emphasize = f;
+    pub fn de_emphasize(mut self, left: String, right: String) -> Self {
+        self.de_emphasize = [left, right];
         self
     }
     /// Set the fixation point. The lower the fixation point, the more characters will be emphasized. The `fixation_point` should be in range \[1, 5\], defaulting to 3 when not specified.
@@ -86,12 +93,16 @@ impl BioReader {
     ///
     /// ```rust
     /// use bio_read::BioReader;
+    /// let markdownBold = String::from("**");
+    /// let empty = String::from("");
     /// let reader = BioReader::new()
-    ///     .emphasize(|s| format!("**{s}**"))
+    ///     .emphasize(markdownBold.clone(), markdownBold.clone())
+    ///     .de_emphasize(empty.clone(), empty.clone())
     ///     .fixation_point(1); // Set fixation point to 1
     /// assert_eq!(reader.bio_read_word("pneumonoultramicroscopicsilicovolcanoconiosis"), "**pneumonoultramicroscopicsilicovolcano**coniosis");
     /// let reader = BioReader::new()
-    ///     .emphasize(|s| format!("**{s}**"))
+    ///     .emphasize(markdownBold.clone(), markdownBold.clone())
+    ///     .de_emphasize(empty.clone(), empty.clone())
     ///     .fixation_point(5); // Set fixation point to 5
     /// assert_eq!(reader.bio_read_word("pneumonoultramicroscopicsilicovolcanoconiosis"), "**pneumonoult**ramicroscopicsilicovolcanoconiosis");
     /// ```
@@ -124,9 +135,13 @@ impl BioReader {
     pub fn bio_read_word(&self, word: &str) -> String {
         if self.common_words.contains(&word.to_lowercase()) {
             return format!(
-                "{}{}",
-                (self.emphasize)(&word[..1]),
-                (self.de_emphasize)(&word[1..])
+                "{}{}{}{}{}{}",
+                self.emphasize[0],
+                &word[..1],
+                self.emphasize[1],
+                self.de_emphasize[0],
+                &word[1..],
+                self.de_emphasize[1]
             );
         }
         let len = word.len();
@@ -139,9 +154,13 @@ impl BioReader {
         let fixation_boundary = word.len() - fixation_length_from_last;
         let (prefix, suffix) = word.split_at(fixation_boundary);
         format!(
-            "{}{}",
-            (self.emphasize)(prefix),
-            (self.de_emphasize)(suffix)
+            "{}{}{}{}{}{}",
+            self.emphasize[0],
+            prefix,
+            self.emphasize[1],
+            self.de_emphasize[0],
+            suffix,
+            self.de_emphasize[1]
         )
     }
     /// Do bio-reading on a piece of text.
@@ -170,6 +189,14 @@ impl BioReader {
             result.push_str(&self.bio_read_word(&word));
         }
         result
+    }
+    /// Do bio-reading on `reader` and write the result to `writer`. Note that this method is not implemented yet. <!-- disregards `common_words` for now. -->
+    ///
+    /// # Performance
+    ///
+    /// This method guarantees linear time complexity and constant memory usage.
+    pub fn bio_read(&self, reader: &impl Read, writer: &impl Write) {
+        todo!()
     }
 
     /// Get the fixation boundaries given a fixation point.

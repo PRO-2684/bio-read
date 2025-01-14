@@ -10,8 +10,9 @@ description = "Bionic reading in terminal."
 keywords = ["bionic", "reading", "terminal", "cli", "rust"]
 
 [dependencies]
+anstream = "0.6.18"
+anstyle = "1.0.10"
 argh = "0.1.13"
-colored = "3.0.0"
 
 [profile.release]
 strip = true  # Automatically strip symbols from the binary.

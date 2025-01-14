@@ -3,8 +3,8 @@ use std::{fs, path::Path};
 
 fn setup_reader(fixation_point: usize) -> BioReader {
     let reader = BioReader::new()
-        .emphasize(|s| format!("<em>{s}</em>"))
-        .de_emphasize(|s| format!("<de>{s}</de>"))
+        .emphasize("<em>".to_string(), "</em>".to_string())
+        .de_emphasize("<de>".to_string(), "</de>".to_string())
         .fixation_point(fixation_point);
     reader
 }

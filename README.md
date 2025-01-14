@@ -56,3 +56,9 @@ To set fixation points, use the `-f` flag, which is a shorthand for `--fixation-
 ```bash
 $ cat file.txt | br -f 1
 ```
+
+## ✅ TODO
+
+- [ ] Streaming input and output (`bio_read` method of `bio_read::BioReader`)
+- [ ] Auto detection of whether ansi styling is supported (`anstream::AutoStream`?)
+- [ ] Allow overriding auto detection of ansi styling (`anstream::ColorChoice`?)
