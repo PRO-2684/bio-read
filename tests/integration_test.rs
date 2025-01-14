@@ -16,17 +16,37 @@ fn test_bio_read_simple() {
 }
 
 #[test]
-fn test_bio_read_on_files() {
+fn test_bio_read_on_files() -> std::io::Result<()> {
     let reader = setup_reader(3);
     // tests/input/* -> tests/output/*
-    let files = fs::read_dir("tests/input").unwrap();
+    let files = fs::read_dir("tests/input")?;
     for file in files {
-        let file = file.unwrap();
+        let file = file?;
         let path = file.path();
-        let text = fs::read_to_string(&path).unwrap();
+        let text = fs::read_to_string(&path)?;
         let output = reader.bio_read_text(&text);
         let output_path = Path::new("tests/output").join(path.file_name().unwrap());
-        let expected_output = fs::read_to_string(&output_path).unwrap();
+        let expected_output = fs::read_to_string(&output_path)?;
         assert_eq!(output, expected_output);
     }
+    Ok(())
+}
+
+#[test]
+fn test_bio_read_with_stream() -> std::io::Result<()> {
+    let reader = setup_reader(3);
+    // tests/input/* -> tests/output/*
+    let files = fs::read_dir("tests/input")?;
+    for file in files {
+        let file = file?;
+        let path = file.path();
+        let file = fs::File::open(file.path())?;
+        let mut output_buffer = Vec::new();
+        reader.bio_read(file, &mut output_buffer)?;
+        let output = String::from_utf8(output_buffer).unwrap();
+        let output_path = Path::new("tests/output").join(path.file_name().unwrap());
+        let expected_output = fs::read_to_string(&output_path)?;
+        assert_eq!(output, expected_output);
+    }
+    Ok(())
 }

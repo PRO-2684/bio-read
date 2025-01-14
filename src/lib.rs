@@ -1,10 +1,10 @@
 //! # Bio Read Library
 //!
-//! The `bio-read` library is an open-source implementation of the Bionic Reading method. Taking inspiration from [text-vide](https://github.com/Gumball12/text-vide/blob/main/HOW.md) and [a bionic reading userscript](https://github.com/yitong2333/Bionic-Reading/blob/main/%E4%BB%BF%E7%94%9F%E9%98%85%E8%AF%BB(Bionic%20Reading)-1.6.user.js), this library ports the Bionic Reading method to Rust and provides a CLI for bio-reading text files right from the terminal.
+//! The `bio-read` library is an open-source implementation of the Bionic Reading method. Taking inspiration from [text-vide](https://github.com/Gumball12/text-vide/blob/main/HOW.md), this library ports the Bionic Reading method to Rust and provides a CLI for bio-reading text files right from the terminal.
 
 use anstyle::Style;
 use std::{
-    collections::HashSet,
+    collections::VecDeque,
     io::{Read, Write},
 };
 
@@ -16,8 +16,6 @@ pub struct BioReader {
     de_emphasize: [String; 2],
     /// Reverse map of fixation boundaries for quick lookup. A word of length `i` or less will be emphasized except for the last `reverse_fixation_boundaries[i]` characters. If the word is longer than `reverse_fixation_boundaries.len()`, `reverse_fixation_boundaries.last().unwrap() + 1` will be used (one more than the last).
     reverse_fixation_boundaries: Vec<usize>,
-    /// Common words. Only the first letter of these words will be emphasized.
-    common_words: HashSet<String>,
 }
 
 impl BioReader {
@@ -28,18 +26,7 @@ impl BioReader {
         Self {
             emphasize: [format!("{bold}"), format!("{bold:#}")],
             de_emphasize: [format!("{dim}"), format!("{dim:#}")],
-            reverse_fixation_boundaries: Self::reverse_fixation_boundaries(&Self::fixation_boundaries(3)),
-            common_words: [
-                // https://github.com/yitong2333/Bionic-Reading/blob/acaecfc852f9778a58af89863b80b56bcd4eb637/%E4%BB%BF%E7%94%9F%E9%98%85%E8%AF%BB(Bionic%20Reading)-1.6.user.js#L33-L38
-                "the", "and", "in", "on", "at", "by", "with", "about", "against", "between", "into",
-                "through", "during", "before", "after", "above", "below", "to", "from", "up",
-                "down", "over", "under", "again", "further", "then", "once", "here", "there",
-                "when", "where", "why", "how", "all", "any", "both", "each", "few", "more", "most",
-                "other", "some",
-            ]
-            .iter()
-            .map(|s| s.to_string())
-            .collect(),
+            reverse_fixation_boundaries: Self::reverse_fixation_boundaries(3),
         }
     }
 
@@ -123,7 +110,7 @@ impl BioReader {
             "Fixation point should be in range [1, 5], but got {}",
             fixation_point
         );
-        self.reverse_fixation_boundaries = Self::reverse_fixation_boundaries(&Self::fixation_boundaries(fixation_point));
+        self.reverse_fixation_boundaries = Self::reverse_fixation_boundaries(fixation_point);
         self
     }
 
@@ -133,23 +120,8 @@ impl BioReader {
     ///
     /// [`BioReader::bio_read_text`]: Do bio-reading on a piece of text.
     pub fn bio_read_word(&self, word: &str) -> String {
-        if self.common_words.contains(&word.to_lowercase()) {
-            return format!(
-                "{}{}{}{}{}{}",
-                self.emphasize[0],
-                &word[..1],
-                self.emphasize[1],
-                self.de_emphasize[0],
-                &word[1..],
-                self.de_emphasize[1]
-            );
-        }
         let len = word.len();
-        let fixation_length_from_last = if len < self.reverse_fixation_boundaries.len() {
-            self.reverse_fixation_boundaries[len]
-        } else {
-            *self.reverse_fixation_boundaries.last().unwrap() + 1 // Default to the last + 1
-        };
+        let fixation_length_from_last = self.get_fixation_length_from_last(len);
         let fixation_boundary = word.len() - fixation_length_from_last;
         let (prefix, suffix) = word.split_at(fixation_boundary);
         format!(
@@ -189,16 +161,99 @@ impl BioReader {
         }
         result
     }
-    /// Do bio-reading on `reader` and write the result to `writer`. Note that this method is not implemented yet. <!-- disregards `common_words` for now. -->
+    /// Do bio-reading on `reader` and write the result to `writer`.
     ///
     /// # Performance
     ///
     /// This method guarantees linear time complexity and constant memory usage.
-    pub fn bio_read(&self, reader: &impl Read, writer: &impl Write) {
-        todo!()
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use bio_read::BioReader;
+    /// use std::io::{Cursor, Write};
+    /// let reader = BioReader::new()
+    ///    .emphasize(String::from("<em>"), String::from("</em>"))
+    ///    .de_emphasize(String::from("<de>"), String::from("</de>"));
+    /// let mut writer = Cursor::new(Vec::new());
+    /// reader.bio_read(Cursor::new("hello world"), &mut writer).unwrap();
+    /// assert_eq!(String::from_utf8(writer.into_inner()).unwrap(), "<em>hel</em><de>lo</de> <em>wor</em><de>ld</de>");
+    /// ```
+    pub fn bio_read(&self, reader: impl Read, writer: &mut impl Write) -> std::io::Result<()> {
+        let mut state = State {
+            read: 0,
+            written: 0,
+        };
+        // The buffer size is at most `self.reverse_fixation_boundaries.last().unwrap()`
+        let rev_boundaries = &self.reverse_fixation_boundaries;
+        let last = rev_boundaries.last().expect("Invalid fixation boundaries");
+        let mut buffer = VecDeque::with_capacity(*last);
+        // Iterate over the reader
+        for c in reader.bytes() {
+            let c = c? as char;
+            if c.is_ascii_alphabetic() {
+                // A letter
+                state.read += 1;
+                if state.read == 1 {
+                    // Start of a word
+                    // Write emphasize start
+                    writer.write_all(self.emphasize[0].as_bytes())?;
+                } else {
+                    // Middle of a word
+                    let fixation_length_from_last = self.get_fixation_length_from_last(state.read);
+                    let least_emphasize_length = state.read - fixation_length_from_last;
+                    if state.written < least_emphasize_length {
+                        // Write word[written, least_emphasize_length], which should be buffer[0, least_emphasize_length - written]
+                        let to_write = buffer.drain(0..least_emphasize_length - state.written).map(|c| c as u8).collect::<Vec<_>>();
+                        writer.write_all(&to_write)?;
+                        state.written = least_emphasize_length;
+                    }
+                }
+                buffer.push_back(c);
+            } else {
+                // Not a letter - special character
+                if state.read != 0 {
+                    // End of a word
+                    let fixation_length_from_last = self.get_fixation_length_from_last(state.read);
+                    let least_emphasize_length = state.read - fixation_length_from_last;
+                    if state.written < least_emphasize_length {
+                        // Write word[written, least_emphasize_length], which should be buffer[0, least_emphasize_length - written]
+                        let to_write = buffer.drain(0..least_emphasize_length - state.written).map(|c| c as u8).collect::<Vec<_>>();
+                        writer.write_all(&to_write)?;
+                        state.written = least_emphasize_length;
+                    }
+                    // Write emphasize end
+                    writer.write_all(self.emphasize[1].as_bytes())?;
+                    // Write de-emphasize start
+                    writer.write_all(self.de_emphasize[0].as_bytes())?;
+                    // Write unwritten word characters
+                    let to_write = buffer.drain(..).map(|c| c as u8).collect::<Vec<_>>();
+                    writer.write_all(&to_write)?;
+                    // Write de-emphasize end
+                    writer.write_all(self.de_emphasize[1].as_bytes())?;
+                    state.read = 0;
+                    state.written = 0;
+                }
+                // Write the special character
+                writer.write_all(&[c as u8])?;
+            }
+        }
+        // Write the unfinished word
+        if state.read > 0 {
+            // Write emphasize end
+            writer.write_all(self.emphasize[1].as_bytes())?;
+            // Write de-emphasize start
+            writer.write_all(self.de_emphasize[0].as_bytes())?;
+            // Write unwritten word characters
+            let to_write = buffer.drain(..).map(|c| c as u8).collect::<Vec<_>>();
+            writer.write_all(&to_write)?;
+            // Write de-emphasize end
+            writer.write_all(self.de_emphasize[1].as_bytes())?;
+        }
+        Ok(())
     }
 
-    /// Get the fixation boundaries given a fixation point.
+    /// Get the fixation boundaries given a fixation point. A word of length `fixation_boundaries[i]` or less will be emphasized except for the last `i` characters. If the word is longer than `fixation_boundaries.last()`, `fixation_boundaries.len()` will be used (one more than the last boundary).
     fn fixation_boundaries(fixation_point: usize) -> Vec<usize> {
         match fixation_point - 1 {
             // `fixation_point` is 1-based
@@ -222,8 +277,9 @@ impl BioReader {
             _ => vec![0, 4, 12, 17, 24, 29, 35, 42, 48], // Default to 0
         }
     }
-    /// Reverse map given fixation boundaries for quick lookup.
-    fn reverse_fixation_boundaries(fixation_boundaries: &[usize]) -> Vec<usize> {
+    /// Get the reverse fixation boundaries given a fixation point. A word of length `i` or less will be emphasized except for the last `reverse_fixation_boundaries[i]` characters. If the word is longer than `reverse_fixation_boundaries.len()`, `reverse_fixation_boundaries.last().unwrap() + 1` will be used (one more than the last).
+    fn reverse_fixation_boundaries(fixation_point: usize) -> Vec<usize> {
+        let fixation_boundaries = Self::fixation_boundaries(fixation_point);
         let last = fixation_boundaries.last().expect("Invalid fixation boundaries");
         let mut fixation = 0;
         let mut result = vec![0; *last + 1];
@@ -235,19 +291,18 @@ impl BioReader {
         }
         result
     }
-}
-
-/// Possible text formats.
-enum Format {
-    Emphasize,
-    DeEmphasize,
-    Normal,
+    /// Get the fixation length from the last character of a word. A word of length `len` or less will be emphasized except for the last `return_value` characters.
+    fn get_fixation_length_from_last(&self, len: usize) -> usize {
+        if len < self.reverse_fixation_boundaries.len() {
+            self.reverse_fixation_boundaries[len]
+        } else {
+            *self.reverse_fixation_boundaries.last().unwrap() + 1 // Longer words default to the last plus one
+        }
+    }
 }
 
 /// Current state. Used internally for [`BioReader::bio_read`].
 struct State {
-    /// Current text format.
-    format: Format,
     /// How many letters of the current word have been read.
     read: usize,
     /// How many letters of the current word have been written.
