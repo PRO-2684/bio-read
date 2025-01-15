@@ -28,15 +28,22 @@ cargo install bio-read
 
 ```bash
 $ br --help
-Usage: br [-f <fixation-point>] [-i <input>]
+Usage: br [-i <input>] [-f <fixation-point>] [-e <emphasize>] [-d <de-emphasize>]
 
 Bionic reading in terminal.
 
 Options:
+  -i, --input       the file to read from. Read from stdin if not specified.
   -f, --fixation-point
                     the fixation point. Should be in range [1, 5]. Default is 3.
-  -i, --input       the file to read from. Read from stdin if not specified.
-  --help, help      display usage information
+  -e, --emphasize   customize how to emphasize the text. The emphasized text
+                    will take the place of "{}". Example: --emphasize
+                    "<em>{}</em>". Default to ansi bold.
+  -d, --de-emphasize
+                    customize how to de-emphasize the text. The de-emphasized
+                    text will take the place of "{}". Example: --de-emphasize
+                    "<de>{}</de>". Default to ansi dimmed.
+  -h, --help        display usage information
 ```
 
 For simple usage, run `br` with the `-i` flag, which is a shorthand for `--input`:
