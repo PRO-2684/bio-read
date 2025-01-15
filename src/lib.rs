@@ -175,13 +175,14 @@ impl BioReader {
     ///
     /// ```rust
     /// use bio_read::BioReader;
-    /// use std::io::{Cursor, Write};
+    /// use std::io::Write;
     /// let reader = BioReader::new()
     ///    .emphasize(String::from("<em>"), String::from("</em>"))
     ///    .de_emphasize(String::from("<de>"), String::from("</de>"));
-    /// let mut writer = Cursor::new(Vec::new());
-    /// reader.bio_read(Cursor::new("hello world"), &mut writer).unwrap();
-    /// assert_eq!(String::from_utf8(writer.into_inner()).unwrap(), "<em>hel</em><de>lo</de> <em>wor</em><de>ld</de>");
+    /// let mut output_buffer = Vec::new();
+    /// reader.bio_read("hello world".as_bytes(), &mut output_buffer).unwrap();
+    /// let output = String::from_utf8(output_buffer).unwrap();
+    /// assert_eq!(output, "<em>hel</em><de>lo</de> <em>wor</em><de>ld</de>");
     /// ```
     pub fn bio_read(&self, reader: impl Read, writer: &mut impl Write) -> std::io::Result<()> {
         let mut state = State {

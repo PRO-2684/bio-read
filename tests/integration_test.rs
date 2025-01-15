@@ -33,7 +33,7 @@ fn test_bio_read_on_files() -> std::io::Result<()> {
 }
 
 #[test]
-fn test_bio_read_with_stream() -> std::io::Result<()> {
+fn test_bio_read() -> std::io::Result<()> {
     let reader = setup_reader(3);
     // tests/input/* -> tests/output/*
     let files = fs::read_dir("tests/input")?;
