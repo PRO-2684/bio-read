@@ -1,6 +1,6 @@
 [package]
 name = "bio-read"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 include = ["/src", "LICENSE", "README.md"]
 repository = "https://github.com/PRO-2684/bio-read"
