@@ -296,6 +296,7 @@ impl BioReader {
     /// Try to write a part of the buffer, with respect to the current state
     fn try_write(&self, writer: &mut impl Write, buffer: &mut VecDeque<char>, state: &mut State) -> std::io::Result<()> {
         let fixation_length_from_last = self.get_fixation_length_from_last(state.read);
+        // At least `least_emphasize_length` characters should be emphasized
         let least_emphasize_length = state.read - fixation_length_from_last;
         if state.written < least_emphasize_length {
             // Write word[written, least_emphasize_length], which should be buffer[0, least_emphasize_length - written]
