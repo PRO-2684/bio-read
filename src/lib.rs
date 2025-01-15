@@ -39,7 +39,7 @@ impl BioReader {
     /// let reader = BioReader::new()
     ///     .emphasize(String::from("<em>"), String::from("</em>"))
     ///     .de_emphasize(String::from(""), String::from(""));
-    /// assert_eq!(reader.bio_read_text("hello world"), "<em>hel</em>lo <em>wor</em>ld");
+    /// assert_eq!(reader.bio_read_text("hello world").unwrap(), "<em>hel</em>lo <em>wor</em>ld");
     /// ```
     ///
     /// # See also
@@ -61,7 +61,7 @@ impl BioReader {
     /// let reader = BioReader::new()
     ///    .emphasize(String::from(""), String::from(""))
     ///     .de_emphasize(String::from("<de>"), String::from("</de>"));
-    /// assert_eq!(reader.bio_read_text("hello world"), "hel<de>lo</de> wor<de>ld</de>");
+    /// assert_eq!(reader.bio_read_text("hello world").unwrap(), "hel<de>lo</de> wor<de>ld</de>");
     /// ```
     ///
     /// # See also
@@ -86,12 +86,12 @@ impl BioReader {
     ///     .emphasize(markdownBold.clone(), markdownBold.clone())
     ///     .de_emphasize(empty.clone(), empty.clone())
     ///     .fixation_point(1); // Set fixation point to 1
-    /// assert_eq!(reader.bio_read_word("pneumonoultramicroscopicsilicovolcanoconiosis"), "**pneumonoultramicroscopicsilicovolcano**coniosis");
+    /// assert_eq!(reader.bio_read_text("pneumonoultramicroscopicsilicovolcanoconiosis").unwrap(), "**pneumonoultramicroscopicsilicovolcano**coniosis");
     /// let reader = BioReader::new()
     ///     .emphasize(markdownBold.clone(), markdownBold.clone())
     ///     .de_emphasize(empty.clone(), empty.clone())
     ///     .fixation_point(5); // Set fixation point to 5
-    /// assert_eq!(reader.bio_read_word("pneumonoultramicroscopicsilicovolcanoconiosis"), "**pneumonoult**ramicroscopicsilicovolcanoconiosis");
+    /// assert_eq!(reader.bio_read_text("pneumonoultramicroscopicsilicovolcanoconiosis").unwrap(), "**pneumonoult**ramicroscopicsilicovolcanoconiosis");
     /// ```
     ///
     /// # Panics
@@ -114,57 +114,6 @@ impl BioReader {
         self
     }
 
-    /// Do bio-reading on a word.
-    ///
-    /// # See also
-    ///
-    /// [`BioReader::bio_read_text`]: Do bio-reading on a piece of text.
-    pub fn bio_read_word(&self, word: &str) -> String {
-        let len = word.len();
-        let fixation_length_from_last = self.get_fixation_length_from_last(len);
-        let fixation_boundary = word.len() - fixation_length_from_last;
-        let (prefix, suffix) = word.split_at(fixation_boundary);
-        // If suffix is empty, skip the de-emphasize part
-        if suffix.is_empty() {
-            return format!("{}{}{}", self.emphasize[0], word, self.emphasize[1]);
-        }
-        format!(
-            "{}{}{}{}{}{}",
-            self.emphasize[0],
-            prefix,
-            self.emphasize[1],
-            self.de_emphasize[0],
-            suffix,
-            self.de_emphasize[1]
-        )
-    }
-    /// Do bio-reading on a piece of text.
-    ///
-    /// # See also
-    ///
-    /// [`BioReader::bio_read_word`]: Do bio-reading on a word.
-    pub fn bio_read_text(&self, text: &str) -> String {
-        let mut result = String::with_capacity(text.len());
-        let mut word = String::new();
-        for c in text.chars() {
-            if c.is_ascii_alphabetic() {
-                // A letter
-                word.push(c);
-            } else {
-                // Not a letter - separator
-                if !word.is_empty() {
-                    result.push_str(&self.bio_read_word(&word));
-                    word.clear();
-                }
-                result.push(c);
-            }
-        }
-        if !word.is_empty() {
-            // In case the text ends with a word
-            result.push_str(&self.bio_read_word(&word));
-        }
-        result
-    }
     /// Do bio-reading on `reader` and write the result to `writer`.
     ///
     /// # Performance
@@ -177,13 +126,17 @@ impl BioReader {
     /// use bio_read::BioReader;
     /// use std::io::Write;
     /// let reader = BioReader::new()
-    ///    .emphasize(String::from("<em>"), String::from("</em>"))
-    ///    .de_emphasize(String::from("<de>"), String::from("</de>"));
+    ///     .emphasize(String::from("<em>"), String::from("</em>"))
+    ///     .de_emphasize(String::from("<de>"), String::from("</de>"));
     /// let mut output_buffer = Vec::new();
     /// reader.bio_read("hello world".as_bytes(), &mut output_buffer).unwrap();
     /// let output = String::from_utf8(output_buffer).unwrap();
     /// assert_eq!(output, "<em>hel</em><de>lo</de> <em>wor</em><de>ld</de>");
     /// ```
+    ///
+    /// # See also
+    ///
+    /// [`BioReader::bio_read_text`]: A simple wrapper around [`BioReader::bio_read`] for processing short strings.
     pub fn bio_read(&self, reader: impl Read, writer: &mut impl Write) -> std::io::Result<()> {
         let mut state = State {
             read: 0,
@@ -230,6 +183,27 @@ impl BioReader {
             self.de_emphasize_buffer(writer, &mut buffer)?;
         }
         Ok(())
+    }
+    /// Do bio-reading on a piece of text. This is a simple wrapper for processing short strings. If you intend to process large files or work with streams, use [`BioReader::bio_read`] instead.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use bio_read::BioReader;
+    /// let reader = BioReader::new()
+    ///     .emphasize(String::from("<em>"), String::from("</em>"))
+    ///     .de_emphasize(String::from("<de>"), String::from("</de>"));
+    /// let output = reader.bio_read_text("hello world").unwrap();
+    /// assert_eq!(output, "<em>hel</em><de>lo</de> <em>wor</em><de>ld</de>");
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// [`BioReader::bio_read`]: Do bio-reading on `reader` and write the result to `writer`.
+    pub fn bio_read_text(&self, text: &str) -> Result<String, std::io::Error> {
+        let mut output_buffer = Vec::new();
+        self.bio_read(text.as_bytes(), &mut output_buffer)?;
+        Ok(String::from_utf8(output_buffer).unwrap())
     }
 
     /// Get the fixation boundaries given a fixation point. A word of length `fixation_boundaries[i]` or less will be emphasized except for the last `i` characters. If the word is longer than `fixation_boundaries.last()`, `fixation_boundaries.len()` will be used (one more than the last boundary).

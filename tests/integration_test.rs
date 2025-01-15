@@ -12,7 +12,7 @@ fn setup_reader(fixation_point: usize) -> BioReader {
 #[test]
 fn test_bio_read_simple() {
     let reader = setup_reader(3);
-    assert_eq!(reader.bio_read_text("hello world"), "<em>hel</em><de>lo</de> <em>wor</em><de>ld</de>");
+    assert_eq!(reader.bio_read_text("hello world").unwrap(), "<em>hel</em><de>lo</de> <em>wor</em><de>ld</de>");
 }
 
 #[test]
@@ -24,7 +24,7 @@ fn test_bio_read_on_files() -> std::io::Result<()> {
         let file = file?;
         let path = file.path();
         let text = fs::read_to_string(&path)?;
-        let output = reader.bio_read_text(&text);
+        let output = reader.bio_read_text(&text).unwrap();
         let output_path = Path::new("tests/output").join(path.file_name().unwrap());
         let expected_output = fs::read_to_string(&output_path)?;
         assert_eq!(output, expected_output);
