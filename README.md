@@ -64,9 +64,11 @@ To set fixation points, use the `-f` flag, which is a shorthand for `--fixation-
 $ cat file.txt | br -f 1
 ```
 
-## 📝 Note
+## 📝 Notes
 
 Although this tool aims to be as close to the [original bionic reading](https://reader.bionic-reading.com/) as possible, it is not exactly the same. Notably, the behavior differs when a word is too long, and it handles special characters differently. However, this tool is open-source, and guarantees linear time complexity and and constant memory usage.
+
+On some terminals, you may need to configure emphasized text style to be "bold" for displaying ansi styles properly. Taking Windows Terminal for example, you'll need to set `profiles.defaults.intenseTextStyle` to `"bold"` or `"all"` in the `settings.json` file, or configure it in the settings UI.
 
 ## ✅ TODO
 
