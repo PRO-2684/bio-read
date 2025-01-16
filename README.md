@@ -26,6 +26,12 @@ cargo install bio-read
 
 ## 📖 Usage
 
+<details><summary>Click to see <code>bio-read</code> in action</summary>
+
+[![asciicast](https://asciinema.org/a/1E6kkMHheWHnzUbKKcrnZ0lcl.svg)](https://asciinema.org/a/1E6kkMHheWHnzUbKKcrnZ0lcl)
+
+</details>
+
 ```bash
 $ br --help
 Usage: br [-i <input>] [-f <fixation-point>] [-e <emphasize>] [-d <de-emphasize>]
