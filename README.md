@@ -15,13 +15,13 @@ Bionic reading in terminal.
 If you have `cargo-binstall`, you can install this tool by running:
 
 ```bash
-cargo binstall bio-read
+$ cargo binstall bio-read
 ```
 
 Otherwise, you can install it from source:
 
 ```bash
-cargo install bio-read
+$ cargo install bio-read
 ```
 
 ## 📖 Usage
