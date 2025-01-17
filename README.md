@@ -24,6 +24,8 @@ Otherwise, you can install it from source:
 $ cargo install bio-read
 ```
 
+Pre-built binaries are available at [Releases](https://github.com/PRO-2684/bio-read/releases).
+
 ## 📖 Usage
 
 <details><summary>Click to see <code>bio-read</code> in action</summary>
