@@ -31,17 +31,17 @@ fn main() -> std::io::Result<()> {
     }
     let mut reader = BioReader::new().fixation_point(fixation_point);
     if let Some(emphasize) = args.emphasize {
-        let (left, right) = emphasize.split_once("{}").unwrap_or_else(|| {
+        let Some((left, right)) = emphasize.split_once("{}") else {
             eprintln!("Invalid emphasize format: {}", emphasize);
             std::process::exit(1);
-        });
+        };
         reader = reader.emphasize(left.to_string(), right.to_string());
     }
     if let Some(de_emphasize) = args.de_emphasize {
-        let (left, right) = de_emphasize.split_once("{}").unwrap_or_else(|| {
+        let Some((left, right)) = de_emphasize.split_once("{}") else {
             eprintln!("Invalid de-emphasize format: {}", de_emphasize);
             std::process::exit(1);
-        });
+        };
         reader = reader.de_emphasize(left.to_string(), right.to_string());
     }
     let mut lock = std::io::stdout().lock();
