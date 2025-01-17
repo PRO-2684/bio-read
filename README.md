@@ -28,6 +28,9 @@ $ cargo install bio-read
 
 <details><summary>Click to see <code>bio-read</code> in action</summary>
 
+> [!NOTE]
+> The following asciinema recording is for demonstration purposes only. It may be outdated and may not reflect the latest version of `bio-read`.
+
 [![asciicast](https://asciinema.org/a/1E6kkMHheWHnzUbKKcrnZ0lcl.svg)](https://asciinema.org/a/1E6kkMHheWHnzUbKKcrnZ0lcl)
 
 </details>
