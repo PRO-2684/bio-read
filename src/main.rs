@@ -6,7 +6,7 @@ use bio_read::BioReader;
 #[argh(help_triggers("-h", "--help"))]
 pub struct Args {
     /// the file to read from. Read from stdin if not specified.
-    #[argh(option, short = 'i')]
+    #[argh(positional)]
     input: Option<String>,
     /// the fixation point. Should be in range [1, 5]. Default is 3.
     #[argh(option, short = 'f', default = "3")]

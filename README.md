@@ -34,12 +34,14 @@ $ cargo install bio-read
 
 ```bash
 $ br --help
-Usage: br [-i <input>] [-f <fixation-point>] [-e <emphasize>] [-d <de-emphasize>]
+Usage: br [<input>] [-f <fixation-point>] [-e <emphasize>] [-d <de-emphasize>]
 
 Bionic reading in terminal.
 
+Positional Arguments:
+  input             the file to read from. Read from stdin if not specified.
+
 Options:
-  -i, --input       the file to read from. Read from stdin if not specified.
   -f, --fixation-point
                     the fixation point. Should be in range [1, 5]. Default is 3.
   -e, --emphasize   customize how to emphasize the text. The emphasized text
@@ -52,10 +54,10 @@ Options:
   -h, --help        display usage information
 ```
 
-For simple usage, run `br` with the `-i` flag, which is a shorthand for `--input`:
+For simple usage, run `br` with the file you want to read:
 
 ```bash
-$ br -i file.txt
+$ br file.txt
 ```
 
 Alternatively, pipe the text you want to read into `br`:
