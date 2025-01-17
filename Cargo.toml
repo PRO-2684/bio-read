@@ -10,7 +10,6 @@ description = "Bionic reading in terminal."
 keywords = ["bionic", "reading", "terminal", "cli", "rust"]
 
 [dependencies]
-anstream = "0.6.18"
 anstyle = "1.0.10"
 argh = "0.1.13"
 
