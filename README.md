@@ -33,7 +33,7 @@ Pre-built binaries are available at [Releases](https://github.com/PRO-2684/bio-r
 > [!NOTE]
 > The following asciinema recording is for demonstration purposes only. It may be outdated and may not reflect the latest version of `bio-read`.
 
-[![asciicast](https://asciinema.org/a/zfYkBDtGbiO03x48tbXxCRqbv.svg)](https://asciinema.org/a/zfYkBDtGbiO03x48tbXxCRqbv)
+[![asciicast](https://asciinema.org/a/vfJ4qXRwysPlEqEpADWQSms6u.svg)](https://asciinema.org/a/vfJ4qXRwysPlEqEpADWQSms6u)
 
 </details>
 
