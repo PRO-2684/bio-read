@@ -8,6 +8,7 @@ license = "AGPL-3.0-or-later"
 readme = "README.md"
 description = "Bionic reading in terminal."
 keywords = ["bionic", "reading", "terminal", "cli", "rust"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 anstyle = "1.0.10"
