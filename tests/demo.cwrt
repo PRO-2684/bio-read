@@ -1,0 +1,36 @@
+# CastWright script file (https://github.com/PRO-2684/castwright/)
+
+---
+title: bio-read@0.2.1
+---
+
+@@interval 80ms
+@@start-lag 500ms
+@@end-lag 100ms
+@@prompt "\u001b[36m$ \u001b[0m"
+@@secondary "\u001b[2;36m> \u001b[0m"
+@@continuation "\u001b[2m \\\u001b[0m"
+
+@hidden
+$ cd tests/input
+
+$ # To start with, let's have a look at the text file first:
+$ cat varied_length.txt
+
+! Provide a path
+
+$ # Simply provide a path to `br`:
+$ br varied_length.txt
+
+! Pipe the text
+
+$ # ...Or pipe the text:
+$ cat varied_length.txt | br
+
+! Large files
+
+@interval 30ms
+$ # This tool guarantees linear time complexity and constant memory usage, \
+> so no worries when processing large files!
+$ wc the_last_question.md
+$ br the_last_question.md

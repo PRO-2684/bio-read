@@ -15,13 +15,13 @@ Bionic reading in terminal.
 If you have `cargo-binstall`, you can install this tool by running:
 
 ```bash
-$ cargo binstall bio-read
+cargo binstall bio-read
 ```
 
 Otherwise, you can install it from source:
 
 ```bash
-$ cargo install bio-read
+cargo install bio-read
 ```
 
 Pre-built binaries are available at [Releases](https://github.com/PRO-2684/bio-read/releases).
@@ -33,7 +33,7 @@ Pre-built binaries are available at [Releases](https://github.com/PRO-2684/bio-r
 > [!NOTE]
 > The following asciinema recording is for demonstration purposes only. It may be outdated and may not reflect the latest version of `bio-read`.
 
-[![asciicast](https://asciinema.org/a/vfJ4qXRwysPlEqEpADWQSms6u.svg)](https://asciinema.org/a/vfJ4qXRwysPlEqEpADWQSms6u)
+[![asciicast](https://asciinema.org/a/xlwEJS15E5vKkKSP8131LPBla.svg)](https://asciinema.org/a/xlwEJS15E5vKkKSP8131LPBla)
 
 </details>
 
@@ -62,19 +62,19 @@ Options:
 For simple usage, run `br` with the file you want to read:
 
 ```bash
-$ br file.txt
+br file.txt
 ```
 
 Alternatively, pipe the text you want to read into `br`:
 
 ```bash
-$ cat file.txt | br
+cat file.txt | br
 ```
 
 To set fixation points, use the `-f` flag, which is a shorthand for `--fixation-point`:
 
 ```bash
-$ cat file.txt | br -f 1
+cat file.txt | br -f 1
 ```
 
 ## 📝 Notes
